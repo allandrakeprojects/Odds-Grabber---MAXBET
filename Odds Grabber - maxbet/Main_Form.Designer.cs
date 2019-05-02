@@ -31,6 +31,7 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main_Form));
             this.panel_header = new System.Windows.Forms.Panel();
+            this.label_retry = new System.Windows.Forms.Label();
             this.pictureBox_header = new System.Windows.Forms.PictureBox();
             this.panel1 = new System.Windows.Forms.Panel();
             this.label_title = new System.Windows.Forms.Label();
@@ -49,6 +50,7 @@
             this.panel3 = new System.Windows.Forms.Panel();
             this.panel4 = new System.Windows.Forms.Panel();
             this.timer_size = new System.Windows.Forms.Timer(this.components);
+            this.timer_retry = new System.Windows.Forms.Timer(this.components);
             this.panel_header.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox_header)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox_minimize)).BeginInit();
@@ -61,6 +63,7 @@
             // panel_header
             // 
             this.panel_header.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(16)))), ((int)(((byte)(90)))), ((int)(((byte)(101)))));
+            this.panel_header.Controls.Add(this.label_retry);
             this.panel_header.Controls.Add(this.pictureBox_header);
             this.panel_header.Controls.Add(this.panel1);
             this.panel_header.Controls.Add(this.label_title);
@@ -72,6 +75,18 @@
             this.panel_header.Size = new System.Drawing.Size(466, 45);
             this.panel_header.TabIndex = 1;
             this.panel_header.MouseDown += new System.Windows.Forms.MouseEventHandler(this.panel_header_MouseDown);
+            // 
+            // label_retry
+            // 
+            this.label_retry.Font = new System.Drawing.Font("Microsoft Sans Serif", 12.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label_retry.Location = new System.Drawing.Point(206, 12);
+            this.label_retry.Name = "label_retry";
+            this.label_retry.Size = new System.Drawing.Size(161, 23);
+            this.label_retry.TabIndex = 13;
+            this.label_retry.Text = "-";
+            this.label_retry.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.label_retry.Visible = false;
+            this.label_retry.MouseDown += new System.Windows.Forms.MouseEventHandler(this.label_retry_MouseDown);
             // 
             // pictureBox_header
             // 
@@ -248,6 +263,11 @@
             // 
             this.timer_size.Tick += new System.EventHandler(this.timer_size_Tick);
             // 
+            // timer_retry
+            // 
+            this.timer_retry.Interval = 1000;
+            this.timer_retry.Tick += new System.EventHandler(this.timer_retry_Tick);
+            // 
             // Main_Form
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -305,5 +325,7 @@
         private System.Windows.Forms.Panel panel3;
         private System.Windows.Forms.Panel panel4;
         private System.Windows.Forms.Timer timer_size;
+        private System.Windows.Forms.Label label_retry;
+        private System.Windows.Forms.Timer timer_retry;
     }
 }

@@ -13,8 +13,11 @@ using System.Net;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using WebSocketSharp;
 
 namespace Odds_Grabber___maxbet
 {
@@ -33,6 +36,10 @@ namespace Odds_Grabber___maxbet
         private string __running_02 = "tbs";
         private string __running_11 = "WFT";
         private string __running_22 = "TBS";
+        private string __token = "";
+        private string __id = "";
+        private string __end_time = "";
+        private string __start_time = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
         private int __send = 0;
         private int __r = 211;
         private int __g = 78;
@@ -219,6 +226,14 @@ namespace Odds_Grabber___maxbet
                 SendMessage(Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
             }
         }
+        private void label_retry_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                ReleaseCapture();
+                SendMessage(Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
+            }
+        }
         // ----- Drag to Move
 
         // Click Close
@@ -341,11 +356,9 @@ namespace Odds_Grabber___maxbet
         private void timer_landing_Tick(object sender, EventArgs e)
         {
             panel_landing.Visible = false;
-            //panel_cefsharp.Visible = false;
-            //pictureBox_loader.Visible = true;
-            //panel3.Visible = true;
-            //panel4.Visible = true;
-            //timer_size.Start();
+            panel_cefsharp.Visible = false;
+            pictureBox_loader.Visible = true;
+            timer_size.Start();
             timer_landing.Stop();
         }
 
@@ -584,6 +597,7 @@ namespace Odds_Grabber___maxbet
             chromeBrowser = new ChromiumWebBrowser(__url);
             panel_cefsharp.Controls.Add(chromeBrowser);
             chromeBrowser.AddressChanged += ChromiumBrowserAddressChanged;
+            chromeBrowser.FrameLoadEnd += ChromiumBrowserFrameLoadEnded;
         }
 
         private bool __detect = false;
@@ -597,9 +611,37 @@ namespace Odds_Grabber___maxbet
                 panel3.Visible = true;
                 panel4.Visible = true;
             }));
+            
+            if (e.Address.ToString().Contains("maxbet.com/index"))
+            {
+                var html = String.Empty;
+                chromeBrowser.GetSourceAsync().ContinueWith(taskHtml =>
+                {
+                    html = taskHtml.Result.ToString().ToLower();
+                    if (html.Contains("under maintenance"))
+                    {
+                        Properties.Settings.Default.______odds_iswaiting_01 = true;
+                        Properties.Settings.Default.Save();
 
+                        if (!Properties.Settings.Default.______odds_issend_01)
+                        {
+                            Properties.Settings.Default.______odds_issend_01 = true;
+                            Properties.Settings.Default.Save();
+                            SendABCTeam("Under Maintenance.");
+                        }
+                        
+                        Invoke(new Action(() =>
+                        {
+                            panel3.Visible = false;
+                            panel4.Visible = false;
+                            __end_time = DateTime.Now.AddMinutes(5).AddSeconds(2).ToString("dd/MM/yyyy HH:mm:ss");
+                            timer_retry.Start();
+                        }));
 
-            if (e.Address.ToString().Equals("https://www.maxbet.com/Default.aspx?IsSSL=1"))
+                    }
+                });
+            }
+            else if (e.Address.ToString().Equals("https://www.maxbet.com/Default.aspx?IsSSL=1"))
             {
                 var html = String.Empty;
                 chromeBrowser.GetSourceAsync().ContinueWith(taskHtml =>
@@ -624,6 +666,9 @@ namespace Odds_Grabber___maxbet
                                     {
                                         if (!__is_login)
                                         {
+                                            __is_login = true;
+                                            __detect = true;
+
                                             chromeBrowser.Focus();
                                             args.Frame.ExecuteJavaScriptAsync("document.getElementsByClassName('txtID')[0].focus();");
                                             await ___TaskWait_Handler(2);
@@ -634,10 +679,6 @@ namespace Odds_Grabber___maxbet
 
                                             chromeBrowser.SetZoomLevel(-5);
                                         }
-                                        else
-                                        {
-                                            __detect = true;
-                                        }
                                     }));
                                 }
                             };
@@ -645,32 +686,103 @@ namespace Odds_Grabber___maxbet
                     }
                 });
             }
+            //if (__detect)
+            //{
+            //    if (e.Address.ToString().Contains("maxbet.com/sports"))
+            //    {
 
-            if (__detect)
+            //        Invoke(new Action(() =>
+            //        {
+            //            chromeBrowser.FrameLoadEnd += (sender_, args) =>
+            //            {
+            //                if (args.Frame.IsMain)
+            //                {
+            //                    Invoke(new Action(() =>
+            //                    {
+            //                        __is_login = true;
+
+            //                        //SendABCTeam("Firing up!");
+            //                        //Task task_01 = new Task(delegate { ___FIRST_RUNNINGAsync(); });
+            //                        //task_01.Start();
+            //                    }));
+            //                }
+            //            };
+            //        }));
+
+            //        Thread.Sleep(5000);
+
+            //        chromeBrowser.ViewSource();
+            //        chromeBrowser.GetSourceAsync().ContinueWith(taskHtml =>
+            //        {
+            //            var html = taskHtml.Result;
+            //            MessageBox.Show(html);
+            //        });
+            //    }
+            //}
+        }
+        
+        private void ChromiumBrowserFrameLoadEnded(object sender, FrameLoadEndEventArgs e)
+        {
+            if (e.Frame.IsMain)
             {
-                if (e.Address.ToString().Contains("maxbet.com/sports"))
+                if (__detect)
                 {
-                    Invoke(new Action(() =>
+                    if (__url.Contains("maxbet.com/sports"))
                     {
-                        chromeBrowser.FrameLoadEnd += (sender_, args) =>
+                        Thread.Sleep(5000);
+                        chromeBrowser.GetSourceAsync().ContinueWith(taskHtml =>
                         {
-                            if (args.Frame.IsMain)
+                            string html = taskHtml.Result;
+                            //vip = Regex.Match(vip.ToString(), "<label(.*?)>(.*?)</label>").Groups[2].Value;
+                            var pattern = @"MS2.account = \{(.*?)\};";
+                            Match responsebody = Regex.Match(html, pattern, RegexOptions.IgnoreCase);
+                            if (responsebody.Success)
                             {
-                                Invoke(new Action(() =>
-                                {
-                                    __is_login = true;
-                                    SendABCTeam("Firing up!");
+                                html = responsebody.Value.Replace("MS2.account = ", "").Replace("};", "}");
+                                var deserializeObject = JsonConvert.DeserializeObject(html);
+                                JObject _jo = JObject.Parse(deserializeObject.ToString());
+                                JToken _token = _jo.SelectToken("$.pnv.tk");
+                                JToken _id = _jo.SelectToken("$.ID");
+                                __token = _token.ToString();
+                                __id = _id.ToString();
 
-                                    Task task_01 = new Task(delegate { ___FIRST_RUNNINGAsync(); });
-                                    task_01.Start();
-                                }));
+                                if (!Properties.Settings.Default.______odds_iswaiting_01 && Properties.Settings.Default.______odds_issend_01)
+                                {
+                                    Properties.Settings.Default.______odds_issend_01 = false;
+                                    Properties.Settings.Default.Save();
+
+                                    SendABCTeam(__running_11 + " Back to Normal. Firing up!");
+                                }
+                                else
+                                {
+                                    SendABCTeam("Firing up!");
+                                }
+
+                                label_title.Text = "Odds Grabber - maxbet";
+                                panel4.Visible = true;
+                                Task task_01 = new Task(delegate { ___FIRST_RUNNINGAsync(); });
+                                task_01.Start();
                             }
-                        };
-                    }));
-                }
-                else
-                {
-                    MessageBox.Show(e.Address.ToString());
+                            else
+                            {
+                                __is_close = false;
+                                Environment.Exit(0);
+                                SendMyBot("Response body not match.");
+                            }
+
+                            __is_login = true;
+
+                            if (__token == "" && __id == "")
+                            {
+                                __is_close = false;
+                                Environment.Exit(0);
+                                SendMyBot("Response body not match.");
+                            }
+
+                        });
+
+                        __detect = false;
+                    }
                 }
             }
         }
@@ -681,287 +793,54 @@ namespace Odds_Grabber___maxbet
         {
             Invoke(new Action(() =>
             {
-                panel3.BackColor = Color.FromArgb(0, 255, 0);
+                panel4.BackColor = Color.FromArgb(0, 255, 0);
             }));
 
             try
             {
-                string start_time = DateTime.Now.AddDays(-2).ToString("yyyy-MM-dd 00:00:00");
-                string end_time = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd 00:00:00");
-
-                start_time = start_time.Replace("-", "%2F");
-                start_time = start_time.Replace(" ", "+");
-                start_time = start_time.Replace(":", "%3A");
-
-                end_time = end_time.Replace("-", "%2F");
-                end_time = end_time.Replace(" ", "+");
-                end_time = end_time.Replace(":", "%3A");
-
-                var cookieManager = Cef.GetGlobalCookieManager();
-                var visitor = new CookieCollector();
-                cookieManager.VisitUrlCookies("http://sports.wclub888.com", true, visitor);
-                var cookies = await visitor.Task;
-                var cookie = CookieCollector.GetCookieHeader(cookies);
-                WebClient wc = new WebClient();
-                wc.Headers.Add("Cookie", cookie);
-                wc.Encoding = Encoding.UTF8;
-                wc.Headers.Add("Content-Type", "application/x-www-form-urlencoded");
-                int _epoch = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
-                byte[] result = await wc.DownloadDataTaskAsync("http://sports.wclub888.com/_View/RMOdds2GenRun.aspx?ot=t&update=false&sa=false&tv=0&tf=-1&TFStatus=0&mt=0&r=1038308059&t=" + _epoch + "&RId=0&_=" + _epoch);
-                string responsebody = Encoding.UTF8.GetString(result);
-                var deserializeObject = JsonConvert.DeserializeObject(responsebody);
-                JObject _jo = JObject.Parse(deserializeObject.ToString());
-                JToken _count = _jo.SelectToken("$.JSOdds");
-
-                string password = __website_name + __running_01 + __api_key;
-                byte[] encodedPassword = new UTF8Encoding().GetBytes(password);
-                byte[] hash = ((HashAlgorithm)CryptoConfig.CreateFromName("MD5")).ComputeHash(encodedPassword);
-                string token = BitConverter.ToString(hash).Replace("-", string.Empty).ToLower();
-                string ref_match_id = "";
-
-                if (_count.Count() > 0)
+                using (var ws = new WebSocket("ws://agnj3.maxbet.com/socket.io/?gid=91ba1f43ffaa5d88&token=" + __token + "&id=" + __id + "&rid=1&EIO=3&transport=websocket&sid=rqFKfNOZvQ71Et10Bc0g"))
                 {
-                    string _last_ref_id = "";
-                    int _row_no = 1;
-                    for (int i = 0; i < _count.Count(); i++)
-                    {
-                        JToken LeagueName = _jo.SelectToken("$.JSOdds[" + i + "][7]").ToString();
-                        JToken HomeScore__AwayScore = _jo.SelectToken("$.JSOdds[" + i + "][16]").ToString();
-                        string[] HomeScore__AwayScore_Replace = HomeScore__AwayScore.ToString().Split('-');
-                        string HomeScore = HomeScore__AwayScore_Replace[0].Trim();
-                        string AwayScore = HomeScore__AwayScore_Replace[1].Trim();
-                        string[] AwayScore__MatchTimeHalf = null;
-                        string MatchTimeHalf = "";
-                        string MatchStatus = "";
-                        JToken MatchTimeMinute = "0";
-                        if (HomeScore.Contains("<br>") || AwayScore.Contains("<br>"))
-                        {
-                            AwayScore = HomeScore__AwayScore_Replace[1].Trim().Replace("<br>", "|");
-                            AwayScore__MatchTimeHalf = AwayScore.Split('|');
-                            AwayScore = AwayScore__MatchTimeHalf[0];
-                            MatchTimeHalf = AwayScore__MatchTimeHalf[1];
-                        }
-                        if (MatchTimeHalf.ToLower().Contains("live"))
-                        {
-                            MatchTimeHalf = "LIVE";
-                        }
-                        else if (MatchTimeHalf.ToLower().Contains("ht"))
-                        {
-                            MatchTimeHalf = "HT";
-                        }
-                        else
-                        {
-                            MatchTimeHalf = _jo.SelectToken("$.JSOdds[" + i + "][18]").ToString() + "H";
-                            MatchTimeMinute = _jo.SelectToken("$.JSOdds[" + i + "][19]").ToString().ToUpper();
-                        }
-                        if (__is_numeric(MatchTimeMinute.ToString()))
-                        {
-                            if (MatchTimeHalf.ToString() == "2H" && Convert.ToInt32(MatchTimeMinute.ToString()) > 30)
-                            {
-                                MatchTimeHalf = "FT";
-                                MatchStatus = "C";
-                            }
-                            else
-                            {
-                                MatchStatus = "R";
-                            }
-                        }
-                        else
-                        {
-                            MatchStatus = "R";
-                        }
-                        JToken HomeTeamName = _jo.SelectToken("$.JSOdds[" + i + "][26]").ToString();
-                        JToken AwayTeamName = _jo.SelectToken("$.JSOdds[" + i + "][28]").ToString();
-                        string StatementDate = DateTime.Now.ToString("yyyy-MM-dd 00:00:00");
-                        JToken KickOffDateTime = _jo.SelectToken("$.JSOdds[" + i + "][17]").ToString();
-                        DateTime KickOffDateTime_Replace = DateTime.ParseExact(KickOffDateTime.ToString(), "dd/MM HH:mm", CultureInfo.InvariantCulture);
-                        KickOffDateTime = KickOffDateTime_Replace.ToString("yyyy-MM-dd HH:mm:ss");
-                        JToken FTHDP = _jo.SelectToken("$.JSOdds[" + i + "][24]").ToString();
-                        JToken FTH = _jo.SelectToken("$.JSOdds[" + i + "][36]").ToString().Trim().Replace(".", "");
-                        string FTH_Replace = FTH.ToString().Replace("-", "");
-                        if (FTH_Replace.Length == 1 && FTH_Replace != "0")
-                        {
-                            FTH = FTH + "0";
-                        }
-                        FTH = Convert.ToDecimal(FTH) / 100;
-                        JToken FTA = _jo.SelectToken("$.JSOdds[" + i + "][37]").ToString().Trim().Replace(".", "");
-                        string FTA_Replace = FTA.ToString().Replace("-", "");
-                        if (FTA_Replace.Length == 1 && FTA_Replace != "0")
-                        {
-                            FTA = FTA + "0";
-                        }
-                        FTA = Convert.ToDecimal(FTA) / 100;
-                        string BetIDFTOU = "";
-                        JToken FTOU = _jo.SelectToken("$.JSOdds[" + i + "][42]").ToString();
-                        JToken FTO = _jo.SelectToken("$.JSOdds[" + i + "][46]").ToString().Trim().Replace(".", "");
-                        string FTO_Replace = FTO.ToString().Replace("-", "");
-                        if (FTO_Replace.Length == 1 && FTO_Replace != "0")
-                        {
-                            FTO = FTO + "0";
-                        }
-                        JToken FTU = _jo.SelectToken("$.JSOdds[" + i + "][47]").ToString().Trim().Replace(".", "");
-                        string FTU_Replace = FTU.ToString().Replace("-", "");
-                        if (FTU_Replace.Length == 1 && FTU_Replace != "0")
-                        {
-                            FTU = FTU + "0";
-                        }
-                        FTU = Convert.ToDecimal(FTU) / 100;
-                        JToken FT1 = _jo.SelectToken("$.JSOdds[" + i + "][51]").ToString();
-                        JToken FT2 = _jo.SelectToken("$.JSOdds[" + i + "][52]").ToString();
-                        JToken FTX = _jo.SelectToken("$.JSOdds[" + i + "][53]").ToString();
-                        string BetIDFTOE = "";
-                        string FTOdd = "";
-                        string FTEven = "";
-                        string BetIDFT1X2 = "";
-                        string SpecialGame = "";
-                        JToken FHHDP = _jo.SelectToken("$.JSOdds[" + i + "][56]").ToString();
-                        JToken FHH = _jo.SelectToken("$.JSOdds[" + i + "][60]").ToString().Trim().Replace(".", "");
-                        string FHH_Replace = FHH.ToString().Replace("-", "");
-                        if (FHH_Replace.Length == 1 && FHH_Replace != "0")
-                        {
-                            FHH = FHH + "0";
-                        }
-                        FHH = Convert.ToDecimal(FHH) / 100;
-                        JToken FHA = _jo.SelectToken("$.JSOdds[" + i + "][61]").ToString().Trim().Replace(".", "");
-                        string FHA_Replace = FHA.ToString().Replace("-", "");
-                        if (FHA_Replace.Length == 1 && FHA_Replace != "0")
-                        {
-                            FHA = FHA + "0";
-                        }
-                        FHA = Convert.ToDecimal(FHA) / 100;
-                        JToken FHOU = _jo.SelectToken("$.JSOdds[" + i + "][64]").ToString();
-                        JToken FHO = _jo.SelectToken("$.JSOdds[" + i + "][67]").ToString().Trim().Replace(".", "");
-                        string FHO_Replace = FHO.ToString().Replace("-", "");
-                        if (FHO_Replace.Length == 1 && FHO_Replace != "0")
-                        {
-                            FHO = FHO + "0";
-                        }
-                        FHO = Convert.ToDecimal(FHO) / 100;
-                        JToken FHU = _jo.SelectToken("$.JSOdds[" + i + "][67]").ToString().Trim().Replace(".", "");
-                        string FHU_Replace = FHU.ToString().Replace("-", "");
-                        if (FHU_Replace.Length == 1 && FHU_Replace != "0")
-                        {
-                            FHU = FHU + "0";
-                        }
-                        FHU = Convert.ToDecimal(FHU) / 100;
-                        JToken FH1 = _jo.SelectToken("$.JSOdds[" + i + "][72]").ToString();
-                        JToken FH2 = _jo.SelectToken("$.JSOdds[" + i + "][73]").ToString();
-                        JToken FHX = _jo.SelectToken("$.JSOdds[" + i + "][74]").ToString();
+                    ws.OnMessage += (sender, e) =>
+                    MessageBox.Show("Laputa says: " + e.Data);
 
-                        string ref_id_password = DateTime.Now.ToString("yyyy-MM-dd") + "3" + "Soccer" + LeagueName + HomeTeamName + AwayTeamName;
-                        byte[] ref_id_encodedpassword = new UTF8Encoding().GetBytes(ref_id_password.Trim());
-                        byte[] ref_hash = ((HashAlgorithm)CryptoConfig.CreateFromName("MD5")).ComputeHash(ref_id_encodedpassword);
-                        string ref_token = BitConverter.ToString(ref_hash).Replace("-", string.Empty).ToLower().Substring(0, 8);
-                        ref_match_id = ref_token;
-
-                        if (ref_match_id == _last_ref_id)
-                        {
-                            _row_no++;
-                        }
-                        else
-                        {
-                            _row_no = 1;
-                        }
-
-                        _last_ref_id = ref_match_id;
-
-                        if (HomeTeamName.ToString().ToLower().Contains("vs") || AwayTeamName.ToString().ToLower().Contains("vs"))
-                        {
-                            string[] replace = HomeTeamName.ToString().Split(new string[] { "vs" }, StringSplitOptions.None);
-                            HomeTeamName = replace[0].Trim();
-                            AwayTeamName = replace[1].Trim();
-                        }
-                        else if (HomeTeamName.ToString().ToLower().Contains("+") || AwayTeamName.ToString().ToLower().Contains("+"))
-                        {
-                            string[] replace = HomeTeamName.ToString().Split('+');
-                            HomeTeamName = replace[0].Trim();
-                            AwayTeamName = replace[1].Trim();
-                        }
-
-                        var reqparm_ = new NameValueCollection
-                        {
-                            {"source_id", "3"},
-                            {"sport_name", ""},
-                            {"league_name", LeagueName.ToString().Trim()},
-                            {"home_team", HomeTeamName.ToString().Trim()},
-                            {"away_team", AwayTeamName.ToString().Trim()},
-                            {"home_team_score", HomeScore.ToString()},
-                            {"away_team_score", AwayScore.ToString()},
-                            {"ref_match_id", ref_match_id},
-                            {"odds_row_no", _row_no.ToString()},
-                            {"fthdp", (FTHDP.ToString() != "") ? FTHDP.ToString() : "0"},
-                            {"fth", (FTH.ToString() != "") ? FTH.ToString() : "0"},
-                            {"fta", (FTA.ToString() != "") ? FTA.ToString() : "0"},
-                            {"betidftou", (BetIDFTOU.ToString() != "") ? BetIDFTOU.ToString() : "0"},
-                            {"ftou", (FTOU.ToString() != "") ? FTOU.ToString() : "0"},
-                            {"fto", (FTO.ToString() != "") ? FTO.ToString() : "0"},
-                            {"ftu", (FTU.ToString() != "") ? FTU.ToString() : "0"},
-                            {"betidftoe", (BetIDFTOE.ToString() != "") ? BetIDFTOE.ToString() : "0"},
-                            {"ftodd", (FTOdd.ToString() != "") ? FTOdd.ToString() : "0"},
-                            {"fteven", (FTEven.ToString() != "") ? FTEven.ToString() : "0"},
-                            {"betidft1x2", (BetIDFT1X2.ToString() != "") ? BetIDFT1X2.ToString() : "0"},
-                            {"ft1", (FT1.ToString() != "") ? FT1.ToString() : "0"},
-                            {"ftx", (FTX.ToString() != "") ? FTX.ToString() : "0"},
-                            {"ft2", (FT2.ToString() != "") ? FT2.ToString() : "0"},
-                            {"specialgame", (SpecialGame.ToString() != "") ? SpecialGame.ToString() : "0"},
-                            {"fhhdp", (FHHDP.ToString() != "") ? FHHDP.ToString() : "0"},
-                            {"fhh", (FHH.ToString() != "") ? FHH.ToString() : "0"},
-                            {"fha", (FHA.ToString() != "") ? FHA.ToString() : "0"},
-                            {"fhou", (FHOU.ToString() != "") ? FHOU.ToString() : "0"},
-                            {"fho", (FHO.ToString() != "") ? FHO.ToString() : "0"},
-                            {"fhu", (FHU.ToString() != "") ? FHU.ToString() : "0"},
-                            {"fhodd", "0"},
-                            {"fheven", "0"},
-                            {"fh1", (FH1.ToString() != "") ? FH1.ToString() : "0"},
-                            {"fhx", (FHX.ToString() != "") ? FHX.ToString() : "0"},
-                            {"fh2", (FH2.ToString() != "") ? FH2.ToString() : "0"},
-                            {"statement_date", StatementDate.ToString()},
-                            {"kickoff_date", KickOffDateTime.ToString()},
-                            {"match_time", MatchTimeHalf.ToString()},
-                            {"match_status", MatchStatus},
-                            {"match_minute", MatchTimeMinute.ToString()},
-                            {"api_status", "R"},
-                            {"token_api", token},
-                        };
-
-                        try
-                        {
-                            WebClient wc_ = new WebClient();
-                            byte[] result_ = wc_.UploadValues("http://oddsgrabber.ssitex.com/API/sendOdds", "POST", reqparm_);
-                            string responsebody_ = Encoding.UTF8.GetString(result_);
-                            __send = 0;
-                        }
-                        catch (Exception err)
-                        {
-                            __send++;
-
-                            if (___CheckForInternetConnection())
-                            {
-                                if (__send == 5)
-                                {
-                                    SendMyBot(err.ToString());
-                                    __is_close = false;
-                                    Environment.Exit(0);
-                                }
-                                else
-                                {
-                                    await ___TaskWait_Handler(10);
-                                    WebClient wc_ = new WebClient();
-                                    byte[] result_ = wc_.UploadValues("http://oddsgrabber.ssitex.com/API/sendOdds", "POST", reqparm_);
-                                    string responsebody_ = Encoding.UTF8.GetString(result_);
-                                }
-                            }
-                            else
-                            {
-                                __is_close = false;
-                                Environment.Exit(0);
-                            }
-                        }
-                    }
+                    ws.Connect();
                 }
 
-                __send = 0;
-                ___FIRST_NOTRUNNINGAsync();
+                //var cookieManager = Cef.GetGlobalCookieManager();
+                //var visitor = new CookieCollector();
+                //cookieManager.VisitUrlCookies("https://rs5s9.maxbet.com/sports", true, visitor);
+                //var cookies = await visitor.Task;
+                //var cookie = CookieCollector.GetCookieHeader(cookies);
+                //WebClient wc = new WebClient();
+                //wc.Headers.Add("Cookie", cookie);
+                //wc.Encoding = Encoding.UTF8;
+                //wc.Headers.Add("Content-Type", "application/x-www-form-urlencoded");
+                //int _epoch = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
+                //byte[] result = await wc.DownloadDataTaskAsync("https://rs5s9.maxbet.com/sports");
+                //string responsebody = Encoding.UTF8.GetString(result);
+                //MessageBox.Show(responsebody);
+                ////var deserializeObject = JsonConvert.DeserializeObject(responsebody);
+                ////JObject _jo = JObject.Parse(deserializeObject.ToString());
+                ////JToken _count = _jo.SelectToken("$.JSOdds");
+
+                //string password = __website_name + __running_01 + __api_key;
+                //byte[] encodedPassword = new UTF8Encoding().GetBytes(password);
+                //byte[] hash = ((HashAlgorithm)CryptoConfig.CreateFromName("MD5")).ComputeHash(encodedPassword);
+                //string token = BitConverter.ToString(hash).Replace("-", string.Empty).ToLower();
+                //string ref_match_id = "";
+
+                //if (_count.Count() > 0)
+                //{
+                //    string _last_ref_id = "";
+                //    int _row_no = 1;
+                //    for (int i = 0; i < _count.Count(); i++)
+                //    {
+
+                //    }
+                //}
+
+                //__send = 0;
+                //___FIRST_NOTRUNNINGAsync();
             }
             catch (Exception err)
             {
@@ -1353,6 +1232,62 @@ namespace Odds_Grabber___maxbet
             {
                 sw.WriteLine("<<>>" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "<<>>");
             }
+        }
+
+        private void timer_retry_Tick(object sender, EventArgs e)
+        {
+            Invoke(new Action(() =>
+            {
+                chromeBrowser.SetZoomLevel(0);
+                label_title.Text = "maxbet [OG]";
+                label_retry.Visible = true;
+
+                DateTime end = DateTime.ParseExact(__end_time, "dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture);
+                DateTime start = DateTime.ParseExact(__start_time, "dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture);
+
+                TimeSpan difference = end - start;
+                int hrs = difference.Hours;
+                int mins = difference.Minutes;
+                int secs = difference.Seconds;
+
+                TimeSpan spinTime = new TimeSpan(hrs, mins, secs);
+
+                TimeSpan delta = DateTime.Now - start;
+                TimeSpan timeRemaining = spinTime - delta;
+
+                if (timeRemaining.Minutes != 0)
+                {
+                    if (timeRemaining.Seconds == 0)
+                    {
+                        label_retry.Text = "Retry in " + timeRemaining.Minutes + ":" + timeRemaining.Seconds + "0";
+                    }
+                    else
+                    {
+                        if (timeRemaining.Seconds.ToString().Length == 1)
+                        {
+                            label_retry.Text = "Retry in " + timeRemaining.Minutes + ":0" + timeRemaining.Seconds;
+                        }
+                        else
+                        {
+                            label_retry.Text = "Retry in " + timeRemaining.Minutes + ":" + timeRemaining.Seconds;
+                        }
+                    }
+                }
+                else
+                {
+                    if (label_retry.Text == "Retry in 1")
+                    {
+                        label_retry.Visible = false;
+                        label_retry.Text = "-";
+                        timer_retry.Stop();
+                        chromeBrowser.Load("https://www.maxbet.com");
+                    }
+                    else
+                    {
+                        label_retry.Text = "Retry in " + timeRemaining.Seconds.ToString();
+                    }
+                }
+            }));
         }
     }
 }
