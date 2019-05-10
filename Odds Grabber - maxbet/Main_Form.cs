@@ -2,6 +2,7 @@
 using CefSharp.WinForms;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using SuperWebSocket;
 using System;
 using System.Collections.Specialized;
 using System.Diagnostics;
@@ -10,6 +11,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.WebSockets;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -311,6 +313,7 @@ namespace Odds_Grabber___maxbet
         // Form Load
         private void Main_Form_Load(object sender, EventArgs e)
         {
+
             __app__website_name = __app + " - " + __website_name;
             panel1.BackColor = Color.FromArgb(__r, __g, __b);
             panel2.BackColor = Color.FromArgb(__r, __g, __b);
@@ -344,21 +347,21 @@ namespace Odds_Grabber___maxbet
             if (__is_send)
             {
                 __is_send = false;
-                MessageBox.Show("Telegram Notification is Disabled.", __brand_code + " " + __app, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Telegram Notification is Disabled.", __app__website_name, MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             else
             {
                 __is_send = true;
-                MessageBox.Show("Telegram Notification is Enabled.", __brand_code + " " + __app, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Telegram Notification is Enabled.", __app__website_name, MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
         private void timer_landing_Tick(object sender, EventArgs e)
         {
             panel_landing.Visible = false;
-            panel_cefsharp.Visible = false;
-            pictureBox_loader.Visible = true;
-            timer_size.Start();
+            //panel_cefsharp.Visible = false;
+            //pictureBox_loader.Visible = true;
+            //timer_size.Start();
             timer_landing.Stop();
         }
 
@@ -608,7 +611,7 @@ namespace Odds_Grabber___maxbet
             __url = e.Address.ToString();
             Invoke(new Action(() =>
             {
-                panel3.Visible = true;
+                //panel3.Visible = true;
                 panel4.Visible = true;
             }));
             
@@ -651,8 +654,9 @@ namespace Odds_Grabber___maxbet
                     if (html.Contains("location forbidden"))
                     {
                         SendABCTeam("Please setup first VPN to the installed PC.");
-                        __is_close = false;
-                        Environment.Exit(0);
+                        //MessageBox.Show("Please setup first VPN to this PC.", __app__website_name, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        //__is_close = false;
+                        //Environment.Exit(0);
                     }
                     else
                     {
@@ -686,6 +690,7 @@ namespace Odds_Grabber___maxbet
                     }
                 });
             }
+            
             //if (__detect)
             //{
             //    if (e.Address.ToString().Contains("maxbet.com/sports"))
@@ -732,52 +737,55 @@ namespace Odds_Grabber___maxbet
                         Thread.Sleep(5000);
                         chromeBrowser.GetSourceAsync().ContinueWith(taskHtml =>
                         {
-                            string html = taskHtml.Result;
-                            //vip = Regex.Match(vip.ToString(), "<label(.*?)>(.*?)</label>").Groups[2].Value;
-                            var pattern = @"MS2.account = \{(.*?)\};";
-                            Match responsebody = Regex.Match(html, pattern, RegexOptions.IgnoreCase);
-                            if (responsebody.Success)
+                            Invoke(new Action(() =>
                             {
-                                html = responsebody.Value.Replace("MS2.account = ", "").Replace("};", "}");
-                                var deserializeObject = JsonConvert.DeserializeObject(html);
-                                JObject _jo = JObject.Parse(deserializeObject.ToString());
-                                JToken _token = _jo.SelectToken("$.pnv.tk");
-                                JToken _id = _jo.SelectToken("$.ID");
-                                __token = _token.ToString();
-                                __id = _id.ToString();
-
-                                if (!Properties.Settings.Default.______odds_iswaiting_01 && Properties.Settings.Default.______odds_issend_01)
+                                string html = taskHtml.Result;
+                                //vip = Regex.Match(vip.ToString(), "<label(.*?)>(.*?)</label>").Groups[2].Value;
+                                var pattern = @"MS2.account = \{(.*?)\};";
+                                Match responsebody = Regex.Match(html, pattern, RegexOptions.IgnoreCase);
+                                if (responsebody.Success)
                                 {
-                                    Properties.Settings.Default.______odds_issend_01 = false;
-                                    Properties.Settings.Default.Save();
+                                    html = responsebody.Value.Replace("MS2.account = ", "").Replace("};", "}");
+                                    var deserialize_object = JsonConvert.DeserializeObject(html);
+                                    JObject _jo = JObject.Parse(deserialize_object.ToString());
+                                    JToken _token = _jo.SelectToken("$.pnv.tk");
+                                    JToken _id = _jo.SelectToken("$.ID");
+                                    __token = _token.ToString();
+                                    __id = _id.ToString();
 
-                                    SendABCTeam(__running_11 + " Back to Normal. Firing up!");
+                                    if (!Properties.Settings.Default.______odds_iswaiting_01 && Properties.Settings.Default.______odds_issend_01)
+                                    {
+                                        Properties.Settings.Default.______odds_issend_01 = false;
+                                        Properties.Settings.Default.Save();
+
+                                        SendABCTeam(__running_11 + " Back to Normal. Firing up!");
+                                    }
+                                    else
+                                    {
+                                        //SendABCTeam("Firing up!");
+                                    }
+
+                                    label_title.Text = "Odds Grabber - maxbet";
+                                    panel4.Visible = true;
+                                    Task task_01 = new Task(delegate { ___FIRST_RUNNINGAsync(); });
+                                    task_01.Start();
                                 }
                                 else
                                 {
-                                    SendABCTeam("Firing up!");
+                                    SendMyBot("Response body not match.");
+                                    __is_close = false;
+                                    Environment.Exit(0);
                                 }
 
-                                label_title.Text = "Odds Grabber - maxbet";
-                                panel4.Visible = true;
-                                Task task_01 = new Task(delegate { ___FIRST_RUNNINGAsync(); });
-                                task_01.Start();
-                            }
-                            else
-                            {
-                                __is_close = false;
-                                Environment.Exit(0);
-                                SendMyBot("Response body not match.");
-                            }
+                                __is_login = true;
 
-                            __is_login = true;
-
-                            if (__token == "" && __id == "")
-                            {
-                                __is_close = false;
-                                Environment.Exit(0);
-                                SendMyBot("Response body not match.");
-                            }
+                                if (__token == "" && __id == "")
+                                {
+                                    SendMyBot("Response body not match.");
+                                    __is_close = false;
+                                    Environment.Exit(0);
+                                }
+                            }));
 
                         });
 
@@ -798,13 +806,18 @@ namespace Odds_Grabber___maxbet
 
             try
             {
-                using (var ws = new WebSocket("ws://agnj3.maxbet.com/socket.io/?gid=91ba1f43ffaa5d88&token=" + __token + "&id=" + __id + "&rid=1&EIO=3&transport=websocket&sid=rqFKfNOZvQ71Et10Bc0g"))
-                {
-                    ws.OnMessage += (sender, e) =>
-                    MessageBox.Show("Laputa says: " + e.Data);
+                //https://agnj3.maxbet.com/socket.io/?gid=57f8d5b356230521&token=82750ad9-a183-495b-bcf2-36592997e82e&id=31312762&rid=1&EIO=3&transport=websocket&sid=pqF3h2mEYQr5_Zz7ASUr
+                //using (var ws = new WebSocket("ws://agnj3.maxbet.com/socket.io/?gid=91ba1f43ffaa5d88&token=" + __token + "&id=" + __id + "&rid=1&EIO=3&transport=websocket&sid=rqFKfNOZvQ71Et10Bc0g"))
+                //{
+                //    ws.OnMessage += (senderr, ee) =>
+                //        MessageBox.Show("Message received" + ee.Data);
 
-                    ws.Connect();
-                }
+                //    ws.OnError += (senderr, ee) =>
+                //        MessageBox.Show("Error: " + ee.Message);
+
+                //    ws.Connect();
+                //    //Console.ReadKey(true);
+                //}
 
                 //var cookieManager = Cef.GetGlobalCookieManager();
                 //var visitor = new CookieCollector();
@@ -819,8 +832,8 @@ namespace Odds_Grabber___maxbet
                 //byte[] result = await wc.DownloadDataTaskAsync("https://rs5s9.maxbet.com/sports");
                 //string responsebody = Encoding.UTF8.GetString(result);
                 //MessageBox.Show(responsebody);
-                ////var deserializeObject = JsonConvert.DeserializeObject(responsebody);
-                ////JObject _jo = JObject.Parse(deserializeObject.ToString());
+                ////var deserialize_object = JsonConvert.DeserializeObject(responsebody);
+                ////JObject _jo = JObject.Parse(deserialize_object.ToString());
                 ////JToken _count = _jo.SelectToken("$.JSOdds");
 
                 //string password = __website_name + __running_01 + __api_key;
@@ -908,8 +921,8 @@ namespace Odds_Grabber___maxbet
                 int _epoch = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
                 byte[] result = await wc.DownloadDataTaskAsync("http://sports.wclub888.com/_View/RMOdds2Gen.aspx?ot=t&update=false&sa=false&tv=0&tf=-1&TFStatus=0&mt=0&r=342146139&t=" + _epoch + "&RId=0&_=" + _epoch);
                 string responsebody = Encoding.UTF8.GetString(result);
-                var deserializeObject = JsonConvert.DeserializeObject(responsebody);
-                JObject _jo = JObject.Parse(deserializeObject.ToString());
+                var deserialize_object = JsonConvert.DeserializeObject(responsebody);
+                JObject _jo = JObject.Parse(deserialize_object.ToString());
                 JToken _count = _jo.SelectToken("$.JSOdds");
 
                 string password = __website_name + __running_01 + __api_key;
@@ -1288,6 +1301,251 @@ namespace Odds_Grabber___maxbet
                     }
                 }
             }));
+        }
+
+
+        //private WebSocket client;
+
+        private void button1_Click(object senderr, EventArgs ee)
+        {
+            var url = "wss://agnj3.maxbet.com/socket.io/?gid=051d2c5df5bd1a37&token=" + __token + "&id=" + __id + "&rid=1&EIO=3&transport=websocket&sid=rqFKfNOZvQ71Et10Bc0g";
+            MessageBox.Show(url);
+
+            Connect(url);
+            MessageBox.Show("dasdsadsdas");
+
+
+            //WebSocket wsEcho = new WebSocket(url);
+            //wsEcho.OnMessage += (sender, e) =>
+            //{
+            //    Debug.WriteLine(string.Format("wsGPS OnMessage => {0}", e.Data));
+            //};
+            //wsEcho.Connect();
+
+
+
+
+            //MessageBox.Show("asdas2132132");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            //string host = "wss://agnj3.maxbet.com/socket.io/?gid=91ba1f43ffaa5d88&token=" + __token + "&id=" + __id + "&rid=1&EIO=3&transport=websocket&sid=rqFKfNOZvQ71Et10Bc0g";
+            //client = new WebSocket(host);
+
+            //client.OnOpen += (ss, ee) =>
+            //    Console.Write(string.Format("Connected to { 0} successfully ", host));
+            //client.OnError += (ss, ee) =>
+            //    Console.Write(string.Format("     Error: " + ee.Message));
+            //client.OnMessage += (ss, ee) =>
+            //    Console.Write(string.Format("Echo: " + ee.Data));
+            //client.OnClose += (ss, ee) =>
+            //    Console.Write(string.Format("Disconnected with { 0}", host));
+
+            //var exitEvent = new ManualResetEvent(false);
+            //var url = new Uri("ws://agnj3.maxbet.com/socket.io/?gid=91ba1f43ffaa5d88&token=" + __token + "&id=" + __id + "&rid=1&EIO=3&transport=websocket&sid=rqFKfNOZvQ71Et10Bc0g");
+
+            //using (var client = new Websocket.Client.WebsocketClient(url))
+            //{
+            //    client.ReconnectTimeoutMs = (int)TimeSpan.FromSeconds(30).TotalMilliseconds;
+            //    client.ReconnectionHappened.Subscribe(type =>
+            //        Console.WriteLine($"Message received: {type}"));
+
+            //    client.MessageReceived.Subscribe(msg => Console.WriteLine($"Message received: {msg}"));
+            //    client.Start();
+
+            //    Task.Run(() => client.Send("{ message }"));
+
+            //    exitEvent.WaitOne();
+            //}
+
+            ////https://agnj3.maxbet.com/socket.io/?gid=57f8d5b356230521&token=82750ad9-a183-495b-bcf2-36592997e82e&id=31312762&rid=1&EIO=3&transport=websocket&sid=pqF3h2mEYQr5_Zz7ASUr
+            //using (var ws = new WebSocket("ws://agnj3.maxbet.com/socket.io/?gid=91ba1f43ffaa5d88&token=" + __token + "&id=" + __id + "&rid=1&EIO=3&transport=websocket&sid=rqFKfNOZvQ71Et10Bc0g"))
+            //{
+            //    ws.OnMessage += (senderr, ee) =>
+            //        MessageBox.Show("Message received" + ee.Data);
+
+            //    ws.OnError += (senderr, ee) =>
+            //        MessageBox.Show("Error: " + ee.Message);
+
+            //    ws.Connect();
+            //    //Console.ReadKey(true);
+            //}
+
+            //using (var ws = new WebSocket("wss://echo.websocket.org"))
+            //{
+            //    ws.OnMessage += (o, ee) =>
+            //        MessageBox.Show("Receives: " + ee.Data);
+
+            //    ws.Connect();
+            //}
+
+            //string asdadas = "ws://localhost:8181";
+            //wsServer = new WebSocketServer();
+            //int port = 8088;
+            //wsServer.Setup(port);
+            //wsServer.NewSessionConnected += WsServer_NewSessionConnected;
+            //wsServer.NewMessageReceived += WsServer_NewMessageReceived;
+            //wsServer.NewDataReceived += WsServer_NewDataReceived;
+            //wsServer.SessionClosed += WsServer_SessionClosed;
+            //wsServer.Start();
+        }
+
+        private static void WsServer_SessionClosed(WebSocketSession session, SuperSocket.SocketBase.CloseReason value)
+        {
+            Console.WriteLine("SessionClosed");
+        }
+
+        private static void WsServer_NewDataReceived(WebSocketSession session, byte[] value)
+        {
+            Console.WriteLine("NewDataReceived");
+        }
+
+        private static void WsServer_NewMessageReceived(WebSocketSession session, string value)
+        {
+            Console.WriteLine("NewMessageReceived: " + value);
+            if (value == "Hello server")
+            {
+                session.Send("Hello client");
+            }
+        }
+
+        private static void WsServer_NewSessionConnected(WebSocketSession session)
+        {
+            Console.WriteLine("NewSessionConnected");
+        }
+
+        public async Task Connect(string uri)
+        {
+            Thread.Sleep(1000);
+            
+            ClientWebSocket webSocket = null;
+            try
+            {
+                var cookieManager = Cef.GetGlobalCookieManager();
+                var visitor = new CookieCollector();
+                cookieManager.VisitUrlCookies(__url, true, visitor);
+                var cookies = await visitor.Task;
+                var cookie = CookieCollector.GetCookieHeader(cookies);
+                MessageBox.Show(cookie);
+
+                webSocket = new ClientWebSocket();
+                webSocket.Options.SetRequestHeader("Cookie", cookie);
+                //webSocket.Options.SetRequestHeader("user-agent", "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36");
+                await webSocket.ConnectAsync(new Uri(uri), CancellationToken.None);
+                await Task.WhenAll(Receive(webSocket));
+            }
+            catch (Exception err)
+            {
+                MessageBox.Show(err.ToString());
+            }
+            finally
+            {
+                if (webSocket != null)
+                {
+                    webSocket.Dispose();
+                }
+
+                MessageBox.Show("Websocket Closed.");
+            }
+        }
+
+        private static async Task Receive(ClientWebSocket webSocket)
+        {
+            byte[] buffer = new byte[1024];
+            while (webSocket.State == System.Net.WebSockets.WebSocketState.Open)
+            {
+                var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                if (result.MessageType == WebSocketMessageType.Close)
+                {
+                    await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+                }
+                else
+                {
+                    Console.WriteLine("Receive: " + Encoding.UTF8.GetString(buffer).TrimEnd('\0'));
+                }
+            }
         }
     }
 }
