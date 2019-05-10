@@ -70,5 +70,17 @@ namespace Odds_Grabber___maxbet.Properties {
                 this["______odds_issend_02"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool ______is_send_telegram {
+            get {
+                return ((bool)(this["______is_send_telegram"]));
+            }
+            set {
+                this["______is_send_telegram"] = value;
+            }
+        }
     }
 }

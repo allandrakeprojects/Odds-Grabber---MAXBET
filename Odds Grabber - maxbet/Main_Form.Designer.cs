@@ -51,7 +51,6 @@
             this.panel4 = new System.Windows.Forms.Panel();
             this.timer_size = new System.Windows.Forms.Timer(this.components);
             this.timer_retry = new System.Windows.Forms.Timer(this.components);
-            this.button1 = new System.Windows.Forms.Button();
             this.panel_header.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox_header)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox_minimize)).BeginInit();
@@ -64,7 +63,6 @@
             // panel_header
             // 
             this.panel_header.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(16)))), ((int)(((byte)(90)))), ((int)(((byte)(101)))));
-            this.panel_header.Controls.Add(this.button1);
             this.panel_header.Controls.Add(this.label_retry);
             this.panel_header.Controls.Add(this.pictureBox_header);
             this.panel_header.Controls.Add(this.panel1);
@@ -88,7 +86,6 @@
             this.label_retry.Text = "-";
             this.label_retry.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.label_retry.Visible = false;
-            this.label_retry.MouseDown += new System.Windows.Forms.MouseEventHandler(this.label_retry_MouseDown);
             // 
             // pictureBox_header
             // 
@@ -265,21 +262,6 @@
             // 
             this.timer_size.Tick += new System.EventHandler(this.timer_size_Tick);
             // 
-            // timer_retry
-            // 
-            this.timer_retry.Interval = 1000;
-            this.timer_retry.Tick += new System.EventHandler(this.timer_retry_Tick);
-            // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(267, -5);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 1;
-            this.button1.Text = "button1";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
             // Main_Form
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -339,6 +321,5 @@
         private System.Windows.Forms.Timer timer_size;
         private System.Windows.Forms.Label label_retry;
         private System.Windows.Forms.Timer timer_retry;
-        private System.Windows.Forms.Button button1;
     }
 }
