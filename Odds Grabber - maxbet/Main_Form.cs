@@ -32,7 +32,7 @@ namespace Odds_Grabber___maxbet
         private string __api_key = "youdieidie";
         private string __running_01 = "maxbet";
         private string __running_11 = "MAXBET";
-        private string __app_detect_running = "SG88WIN";
+        private string __app_detect_running = "MAXBET";
         private string __local_ip = "";
         private int __send = 0;
         private int __r = 211;
@@ -238,11 +238,6 @@ namespace Odds_Grabber___maxbet
             WindowState = FormWindowState.Minimized;
         }
 
-        static int LineNumber([System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0)
-        {
-            return lineNumber;
-        }
-
         [DllImport("user32.dll", EntryPoint = "FindWindow", SetLastError = true, CharSet = CharSet.Unicode)]
         static extern IntPtr FindWindowByCaption(IntPtr ZeroOnly, string lpWindowName);
 
@@ -298,6 +293,7 @@ namespace Odds_Grabber___maxbet
         // Form Load
         private void Main_Form_Load(object sender, EventArgs e)
         {
+            ___GetLocalIPAddress();
             __app__website_name = __app + " - maxbet";
             panel1.BackColor = Color.FromArgb(__r, __g, __b);
             panel2.BackColor = Color.FromArgb(__r, __g, __b);
@@ -413,7 +409,7 @@ namespace Odds_Grabber___maxbet
                 }
                 else
                 {
-                    SendMyBot("No Internet Connection Detected.\nLine number: " + LineNumber());
+                    SendMyBot(err.ToString());
                     __is_close = false;
                     Environment.Exit(0);
                 }
@@ -464,7 +460,7 @@ namespace Odds_Grabber___maxbet
                     }
                     else
                     {
-                        SendMyBot("No Internet Connection Detected.\nLine number: " + LineNumber());
+                        SendMyBot(err.ToString());
                         __is_close = false;
                         Environment.Exit(0);
                     }
@@ -543,7 +539,7 @@ namespace Odds_Grabber___maxbet
                 }
                 else
                 {
-                    SendMyBot("No Internet Connection Detected.\nLine number: " + LineNumber());
+                    SendMyBot(err.ToString());
                     __is_close = false;
                     Environment.Exit(0);
                 }
@@ -597,7 +593,7 @@ namespace Odds_Grabber___maxbet
                 }
                 else
                 {
-                    SendMyBot("No Internet Connection Detected.\nLine number: " + LineNumber());
+                    SendMyBot(err.ToString());
                     __is_close = false;
                     Environment.Exit(0);
                 }
@@ -1051,7 +1047,7 @@ namespace Odds_Grabber___maxbet
                             }
                             else
                             {
-                                SendMyBot("No Internet Connection Detected.\nLine number: " + LineNumber());
+                                SendMyBot(err.ToString());
                                 __is_close = false;
                                 Environment.Exit(0);
                             }
@@ -1090,7 +1086,7 @@ namespace Odds_Grabber___maxbet
                 }
                 else
                 {
-                    SendMyBot("No Internet Connection Detected.\nLine number: " + LineNumber());
+                    SendMyBot(err.ToString());
                     __is_close = false;
                     Environment.Exit(0);
                 }
@@ -1428,7 +1424,7 @@ namespace Odds_Grabber___maxbet
                             }
                             else
                             {
-                                SendMyBot("No Internet Connection Detected.\nLine number: " + LineNumber());
+                                SendMyBot(err.ToString());
                                 __is_close = false;
                                 Environment.Exit(0);
                             }
@@ -1486,7 +1482,7 @@ namespace Odds_Grabber___maxbet
                 }
                 else
                 {
-                    SendMyBot("No Internet Connection Detected.\nLine number: " + LineNumber());
+                    SendMyBot(err.ToString());
                     __is_close = false;
                     Environment.Exit(0);
                 }
