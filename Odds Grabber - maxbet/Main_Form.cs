@@ -34,6 +34,15 @@ namespace Odds_Grabber___maxbet
         private string __running_11 = "MAXBET";
         private string __app_detect_running = "MAXBET";
         private string __local_ip = "";
+        // Settings
+        private string __root_url = "";
+        private string __root_url_equals = "";
+        private string __root_url_login = "";
+        private string __MAXBET_running = "";
+        private string __MAXBET_not_running = "";
+        private string __username = "";
+        private string __password = "";
+        // End of Settings
         private int __send = 0;
         private int __r = 211;
         private int __g = 78;
@@ -142,6 +151,18 @@ namespace Odds_Grabber___maxbet
         public Main_Form()
         {
             InitializeComponent();
+
+            // Settings
+            __root_url = Properties.Settings.Default.______root_url.ToString().Replace("amp;", "");
+            __root_url_equals = Properties.Settings.Default.______root_url_equals.ToString().Replace("amp;", "");
+            __root_url_login = Properties.Settings.Default.______root_url_login.ToString().Replace("amp;", "");
+            __MAXBET_running = Properties.Settings.Default.______MAXBET_running.ToString().Replace("amp;", "");
+            __MAXBET_not_running = Properties.Settings.Default.______MAXBET_not_running.ToString().Replace("amp;", "");
+            __username = Properties.Settings.Default.______username.ToString().Replace("amp;", "");
+            __password = Properties.Settings.Default.______password.ToString().Replace("amp;", "");
+
+            //MessageBox.Show(Properties.Settings.Default.______is_send_telegram.ToString() + "\n" + __root_url + "\n" + __root_url_equals + "\n" + __root_url_login + "\n" + __MAXBET_running + "\n" + __MAXBET_not_running + "\n" + __username + "\n" + __password);
+            // End of Settings
 
             timer_landing.Start();
         }
@@ -607,7 +628,7 @@ namespace Odds_Grabber___maxbet
 
             settings.CachePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\CEF";
             Cef.Initialize(settings);
-            chromeBrowser = new ChromiumWebBrowser("http://www.wclub888.com/Web/home.aspx");
+            chromeBrowser = new ChromiumWebBrowser(__root_url);
             panel_cefsharp.Controls.Add(chromeBrowser);
             chromeBrowser.AddressChanged += ChromiumBrowserAddressChanged;
         }
@@ -626,7 +647,7 @@ namespace Odds_Grabber___maxbet
             }));
 
 
-            if (e.Address.ToString().Equals("http://www.wclub888.com/Web/home.aspx"))
+            if (e.Address.ToString().Equals(__root_url_equals))
             {
                 __is_login = false;
                 Invoke(new Action(() =>
@@ -639,8 +660,8 @@ namespace Odds_Grabber___maxbet
                             {
                                 if (!__is_login)
                                 {
-                                    args.Frame.ExecuteJavaScriptAsync("document.getElementsByName('txt_username_login')[0].value = 'pippasue';");
-                                    args.Frame.ExecuteJavaScriptAsync("document.getElementById('Password1').value = 'AAaa1111';");
+                                    args.Frame.ExecuteJavaScriptAsync("document.getElementsByName('txt_username_login')[0].value = '" + __username + "';");
+                                    args.Frame.ExecuteJavaScriptAsync("document.getElementById('Password1').value = '" + __password + "';");
                                     args.Frame.ExecuteJavaScriptAsync("document.querySelector('.btn.btn-default.log').click();");
                                     __is_login = true;
                                 }
@@ -649,7 +670,7 @@ namespace Odds_Grabber___maxbet
                                     __first++;
                                     if (__first == 1)
                                     {
-                                        chromeBrowser.Load("http://www.wclub888.com/Web/w-sport.aspx");
+                                        chromeBrowser.Load(__root_url_login);
                                     }
                                 }
                             }));
@@ -658,7 +679,7 @@ namespace Odds_Grabber___maxbet
                 }));
             }
 
-            if (e.Address.ToString().Equals("http://www.wclub888.com/Web/w-sport.aspx"))
+            if (e.Address.ToString().Equals(__root_url_login))
             {
                 Invoke(new Action(() =>
                 {
@@ -688,7 +709,7 @@ namespace Odds_Grabber___maxbet
         }
 
         // ----- Functions
-        // WFT -----
+        // MAXBET -----
         private async void ___FIRST_RUNNINGAsync()
         {
             Invoke(new Action(() =>
@@ -719,7 +740,7 @@ namespace Odds_Grabber___maxbet
                 wc.Encoding = Encoding.UTF8;
                 wc.Headers.Add("Content-Type", "application/x-www-form-urlencoded");
                 int _epoch = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
-                byte[] result = await wc.DownloadDataTaskAsync("http://sports.wclub888.com/_View/RMOdds2GenRun.aspx?ot=t&update=false&sa=false&tv=0&tf=-1&TFStatus=0&mt=0&r=1038308059&t=" + _epoch + "&RId=0&_=" + _epoch);
+                byte[] result = await wc.DownloadDataTaskAsync(__MAXBET_running + _epoch + "&RId=0&_=" + _epoch);
                 string responsebody = Encoding.UTF8.GetString(result);
                 var deserializeObject = JsonConvert.DeserializeObject(responsebody);
                 JObject _jo = JObject.Parse(deserializeObject.ToString());
@@ -1123,7 +1144,7 @@ namespace Odds_Grabber___maxbet
                 wc.Encoding = Encoding.UTF8;
                 wc.Headers.Add("Content-Type", "application/x-www-form-urlencoded");
                 int _epoch = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
-                byte[] result = await wc.DownloadDataTaskAsync("http://sports.wclub888.com/_View/RMOdds2Gen.aspx?ot=t&update=false&sa=false&tv=0&tf=-1&TFStatus=0&mt=0&r=342146139&t=" + _epoch + "&RId=0&_=" + _epoch);
+                byte[] result = await wc.DownloadDataTaskAsync(__MAXBET_not_running + _epoch + "&RId=0&_=" + _epoch);
                 string responsebody = Encoding.UTF8.GetString(result);
                 var deserializeObject = JsonConvert.DeserializeObject(responsebody);
                 JObject _jo = JObject.Parse(deserializeObject.ToString());
@@ -1432,7 +1453,7 @@ namespace Odds_Grabber___maxbet
                     }
                 }
 
-                // send wft
+                // send maxbet
                 if (Properties.Settings.Default.______odds_issend_01)
                 {
                     Properties.Settings.Default.______odds_issend_01 = false;
@@ -1554,6 +1575,13 @@ namespace Odds_Grabber___maxbet
             {
                 return "0";
             }
+        }
+
+        // added settings
+        private void panel2_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            Form_Settings form_settings = new Form_Settings();
+            form_settings.ShowDialog();
         }
     }
 }

@@ -17,5 +17,26 @@
     <Setting Name="______is_send_telegram" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>
+    <Setting Name="______root_url" Type="System.String" Scope="User">
+      <Value Profile="(Default)">http://www.wclub888.com/Web/home.aspx</Value>
+    </Setting>
+    <Setting Name="______root_url_equals" Type="System.String" Scope="User">
+      <Value Profile="(Default)">http://www.wclub888.com/Web/home.aspx</Value>
+    </Setting>
+    <Setting Name="______root_url_login" Type="System.String" Scope="User">
+      <Value Profile="(Default)">http://www.wclub888.com/Web/w-sport.aspx</Value>
+    </Setting>
+    <Setting Name="______MAXBET_running" Type="System.String" Scope="User">
+      <Value Profile="(Default)">http://sports.wclub888.com/_View/RMOdds2GenRun.aspx?ot=t&amp;update=false&amp;sa=false&amp;tv=0&amp;tf=-1&amp;TFStatus=0&amp;mt=0&amp;r=1352105794&amp;t=</Value>
+    </Setting>
+    <Setting Name="______MAXBET_not_running" Type="System.String" Scope="User">
+      <Value Profile="(Default)">http://sports.wclub888.com/_View/RMOdds2Gen.aspx?ot=t&amp;update=false&amp;sa=false&amp;tv=0&amp;tf=-1&amp;TFStatus=0&amp;mt=0&amp;r=1352105794&amp;t=</Value>
+    </Setting>
+    <Setting Name="______username" Type="System.String" Scope="User">
+      <Value Profile="(Default)">pippasue</Value>
+    </Setting>
+    <Setting Name="______password" Type="System.String" Scope="User">
+      <Value Profile="(Default)">AAaa1111</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
